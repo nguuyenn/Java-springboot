@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<div class="container">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <h1>Admin</h1>
+        <ul>
+            <li><a href="#">Quản lý User</a></li>
+            <li><a href="#">Báo cáo</a></li>
+            <li><a href="#">Cài đặt</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Header -->
+        <div class="header">
+            <button id="toggleSidebar">☰</button>
+            <div class="avatar-container">
+                <img src="/images/admin-avatar.png" alt="Admin Avatar" id="avatar">
+                <div id="dropdown" class="dropdown hidden">
+                    <a href="#">Xem Profile</a>
+                    <form action="/auth/logout" method="post">
+                        <button type="submit">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <h1>Chào mừng Admin</h1>
+            <p>Quản lý hệ thống hiệu quả và dễ dàng.</p>
+
+            <!-- Demo Table -->
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Nguyễn Văn A</td>
+                    <td>admin@example.com</td>
+                    <td>Admin</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Trần Thị B</td>
+                    <td>user@example.com</td>
+                    <td>User</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Web Psychology Admin</p>
+        </footer>
+    </div>
+</div>
+
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

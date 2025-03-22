@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>Dashboard</h2>
+    <ul>
+        <li><a href="#">Trang chủ</a></li>
+        <li><a href="#">Quản lý User</a></li>
+        <li><a href="#">Báo cáo</a></li>
+        <li><a href="#">Cài đặt</a></li>
+    </ul>
+</div>
+
+<!-- Nội dung chính -->
+<div class="main-content">
+    <!-- Header -->
+    <div class="header">
+        <h2>Home</h2>
+        <form action="/auth/logout" method="post">
+            <button class="logout-btn" type="submit">Đăng xuất</button>
+        </form>
+    </div>
+
+    <!-- Nội dung -->
+    <div class="card">
+        <h3>Xin chào</h3>
+        <p>Chào mừng bạn đến với trang web tâm lý học dành cho sinh viên.</p>
+    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Web Psychology. All rights reserved.</p>
+    </footer>
+</div>
+<!-- Load file JS -->
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

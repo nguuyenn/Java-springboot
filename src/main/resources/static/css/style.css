@@ -1,0 +1,88 @@
+/* Tổng thể */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e3f2fd; /* Xanh biển nhạt */
+    color: #333;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+/* Tiêu đề */
+h2 {
+    color: #0277bd; /* Xanh đậm hơn */
+    margin-top: 20px;
+}
+
+/* Form đăng ký */
+form {
+    background-color: #ffffff; /* Trắng */
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Nhãn */
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 10px;
+    text-align: left;
+}
+
+/* Input và select */
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #b3e5fc;
+    border-radius: 5px;
+    background-color: #f1faff;
+}
+
+/* Nút đăng ký */
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0288d1;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #01579b;
+}
+
+/* Thông báo */
+p {
+    font-weight: bold;
+    padding: 5px;
+}
+
+/* Màu đỏ cho thông báo lỗi */
+.error-message {
+    color: red;
+}
+
+/* Màu xanh lá cho thông báo thành công */
+.success-message {
+    color: green;
+}
+
+/* Link chuyển hướng */
+p a {
+    color: #0277bd;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+p a:hover {
+    text-decoration: underline;
+}
