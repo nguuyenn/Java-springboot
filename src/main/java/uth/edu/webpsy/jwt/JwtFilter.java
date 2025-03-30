@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,22 +36,35 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = request.getHeader("Authorization");
 
         if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-            String email = jwtUtil.extractUsername(token);
+            token = token.substring(7); // Cắt bỏ "Bearer " để lấy JWT
 
+            //Kiểm tra nếu token đã bị blacklist
+            if (jwtUtil.isTokenBlacklisted(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token đã bị chặn, vui lòng đăng nhập lại!");
+                return; // Dừng xử lý request tiếp theo
+            }
+            String email = jwtUtil.extractUsername(token); // Trích xuất email từ JWT.
+            HttpSession session = request.getSession();
+
+            //Kiểm tra user có hợp lệ không
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                User user = userService.finByEmail(email); // Dùng userService để lấy User
+                User user = userService.findByEmail(email); // Dùng userService để lấy User
 
+                //Kiểm tra JWT hợp lệ
                 if (user != null && jwtUtil.validateToken(token, user.getEmail())) {
+                    //UserDetails cho Spring Security
                     UserDetails userDetails = org.springframework.security.core.userdetails.User
                             .withUsername(user.getEmail())
                             .password(user.getPassword())
-                            .authorities(new SimpleGrantedAuthority(user.getRole().name()))
+                            .authorities(new SimpleGrantedAuthority(user.getRole().name())) //Cấp quyền
                             .build();
 
+                    //Cấp quyền cho user trong SecurityContext
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    session.setAttribute("loggedInUser", user);
                 }
             }
         }
@@ -58,4 +72,3 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-

@@ -1,8 +1,7 @@
 package uth.edu.webpsy.config;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,67 +13,70 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import uth.edu.webpsy.jwt.JwtUtil;
+import uth.edu.webpsy.models.User;
 import uth.edu.webpsy.services.UserService;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity //bật tính năng bảo mật
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
-
-
     public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
+
+    //kiểm tra JWT token trong mỗi request để xác thực người dùng
     @Bean
     public JwtFilter jwtFilter(UserService userService, JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         return new JwtFilter(jwtUtil, userDetailsService, userService);
     }
 
+    // mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-//    @Bean
-//    public AuthenticationManager authenticationManager(
-//            UserDetailsService userDetailsService,
-//            PasswordEncoder passwordEncoder) throws Exception {
-//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-//        authProvider.setUserDetailsService(userDetailsService);
-//        authProvider.setPasswordEncoder(passwordEncoder);
-//        return new ProviderManager(authProvider);
-//    }
-@Bean
-public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-    return authenticationConfiguration.getAuthenticationManager();
-}
+    //Xử lý đăng nhập
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register").permitAll()
+                .csrf(csrf -> csrf.disable()) // tắt csrf vì api dùng jwt
+                .authorizeHttpRequests(auth -> auth // phân quyền
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(("/css/**"), "/js/**", "/image/**").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/dashboard").hasAnyAuthority("STUDENT", "PARENT", "PSYCHOLOGIST")
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN") // Chỉ admin mới vào được
+                        .requestMatchers("/dashboard/**").hasAnyAuthority("STUDENT", "PARENT", "PSYCHOLOGIST")
+                        .anyRequest().authenticated() // yêu cầu đăng nhập
                 )
                 .formLogin(login -> login
-                        .loginPage("/auth/login") // Chỉ định trang login tùy chỉnh
-                        .defaultSuccessUrl("/dashboard", true) // Điều hướng sau khi login thành công
-                        .failureUrl("/auth/login?error=true")
+                        .loginPage("/auth/web-login")
+                        .defaultSuccessUrl("/dashboard", true) // Mặc định về /dashboard nếu không phải admin
+                        .successHandler((request, response, authentication) -> {
+                            User user = (User) authentication.getPrincipal();
+                            if (user.getRole().equals("ADMIN")) {
+                                response.sendRedirect("/admin/dashboard");
+                            }
+                            else {
+                                response.sendRedirect("/dashboard");
+                            }
+                        }
+                        )
+                        .failureUrl("/auth/web-login?error=true") // Nếu đăng nhập thất bại
                         .permitAll()
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
-                        .logoutSuccessUrl("/auth/login")
-                        .permitAll()
+                .sessionManagement(session -> session // Bật session cho web
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
+                //kiểm tra JWT trước khi Spring Security xử lý request
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

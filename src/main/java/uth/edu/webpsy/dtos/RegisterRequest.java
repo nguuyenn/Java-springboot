@@ -1,10 +1,12 @@
 package uth.edu.webpsy.dtos;
 
+import uth.edu.webpsy.models.Role;
+
 public class RegisterRequest {
     private String username;
     private String email;
     private String password;
-    private String role;
+    private Role role;
 
     // Getter & Setter
     public String getUsername() { return username; }
@@ -16,6 +18,6 @@ public class RegisterRequest {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 }

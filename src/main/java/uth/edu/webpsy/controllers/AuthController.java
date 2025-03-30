@@ -1,67 +1,80 @@
 package uth.edu.webpsy.controllers;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import uth.edu.webpsy.models.Role;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import uth.edu.webpsy.dtos.LoginRequest;
+import uth.edu.webpsy.dtos.RegisterRequest;
 import uth.edu.webpsy.models.User;
+import uth.edu.webpsy.repositories.UserRepository;
 import uth.edu.webpsy.services.UserService;
 
-@Controller
+@Controller // MVC Controller
 @RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
-    UserService userService;
-    @Autowired
-    PasswordEncoder passwordEncoder;
+    private AuthenticationManager authenticationManager;
 
-    @GetMapping("/login")
-    public String showLoginPage(@RequestParam(value = "error", required = false) String error, Model model) {
-        if (error != null) {
-            model.addAttribute("error", "Sai email hoặc mật khẩu!");
-        }
-        return "login"; // Điều hướng đến login.html
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // Hiển thị trang đăng nhập
+    @GetMapping("/web-login")
+    public String showLoginPage() {
+        return "login";
     }
 
-    @GetMapping("/register")
+    // Xử lý đăng nhập
+    @PostMapping("/web-login")
+    public String login(@ModelAttribute User user, RedirectAttributes redirectAttributes) {
+        String result = userService.login(user.getEmail(), user.getPassword());
+        if (result.equals("Email không tồn tại!") || result.equals("Sai mật khẩu!")) {
+            redirectAttributes.addFlashAttribute("error", result);
+            return "redirect:/auth/web-login";
+        }
+        // Chuyển hướng theo role
+        if (result.equals("ADMIN")) {
+            return "redirect:/admin/dashboard"; // Admin vào trang quản lý riêng
+        } else {
+            return "redirect:/dashboard"; // User bình thường vào trang chung
+        }
+    }
+
+
+    // Hiển thị trang đăng ký
+    @GetMapping("/web-register")
     public String showRegisterPage() {
         return "register";
     }
 
-//    @PostMapping("/register")
-//    public String registerUser(@RequestParam("username") String username,
-//                               @RequestParam("email") String email,
-//                               @RequestParam("password") String password,
-//                               @RequestParam("role") Role role,
-//                               Model model) {
-//        if (userService.findByEmail(email) != null) {
-//            model.addAttribute("error", "Email đã được sử dụng!");
-//            return "register";
-//        }
-//        if(userService.findByUsername(username) != null) {
-//            model.addAttribute(("error"),"Tên đăng nhập đã tồn tại!");
-//            return "register";
-//        }
-//
-//        String encodedPassword = passwordEncoder.encode(password);
-//
-//        // Tạo user mới
-//        User newUser = new User();
-//        newUser.setUsername(username);
-//        newUser.setEmail(email);
-//        newUser.setPassword(encodedPassword);
-//        newUser.setRole(role);
-//
-//        // Lưu user vào database
-//        userService.saveUser(newUser);
-//
-//        return "redirect:/auth/login?success";
-//    }
+    // Xử lý đăng ký
+    @PostMapping("/web-register")
+    public String processRegister(@ModelAttribute RegisterRequest request, Model model) {
+        if (userService.existsByEmail(request.getEmail())) {
+            model.addAttribute("error", "Email đã tồn tại!");
+            return "register";
+        }
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            model.addAttribute("error", "Tên đăng nhập đã tồn tại!");
+            return "register";
+        }
+        User newUser = userService.registerUser(request);
+        model.addAttribute("success", "Đăng ký thành công! Hãy đăng nhập.");
+        return "register";
+    }
 }
