@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import uth.edu.webpsy.models.User;
+import uth.edu.webpsy.services.JwtBlacklistService;
 import uth.edu.webpsy.services.UserService;
 
 import java.io.IOException;
@@ -22,11 +23,13 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final UserService userService;
+    private final JwtBlacklistService jwtBlacklistService;
 
-    public JwtFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService, UserService userService) {
+    public JwtFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService, UserService userService, JwtBlacklistService jwtBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.userService = userService;
+        this.jwtBlacklistService = jwtBlacklistService;
     }
 
     @Override
@@ -39,7 +42,7 @@ public class JwtFilter extends OncePerRequestFilter {
             token = token.substring(7); // Cắt bỏ "Bearer " để lấy JWT
 
             //Kiểm tra nếu token đã bị blacklist
-            if (jwtUtil.isTokenBlacklisted(token)) {
+            if (jwtBlacklistService.isTokenBlacklisted(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Token đã bị chặn, vui lòng đăng nhập lại!");
                 return; // Dừng xử lý request tiếp theo

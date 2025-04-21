@@ -1,14 +1,12 @@
 package uth.edu.webpsy.controllers.Res;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import uth.edu.webpsy.dtos.RegisterRequest;
 import uth.edu.webpsy.dtos.RegisterResponse;
 import uth.edu.webpsy.jwt.JwtUtil;
 import uth.edu.webpsy.models.User;
+import uth.edu.webpsy.services.JwtBlacklistService;
 import uth.edu.webpsy.services.UserService;
 import uth.edu.webpsy.dtos.LoginRequest;
 import uth.edu.webpsy.dtos.LoginResponse;
@@ -25,11 +23,13 @@ public class AuthRestController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final JwtBlacklistService jwtBlacklistService;
 
-    public AuthRestController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserService userService) {
+    public AuthRestController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserService userService, JwtBlacklistService jwtBlacklistService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userService = userService;
+        this.jwtBlacklistService = jwtBlacklistService;
     }
     //dùng cho postman để test
     @PostMapping("/login")
@@ -67,30 +67,12 @@ public class AuthRestController {
     }
     //dùng trên postman
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        // Xóa SecurityContext
-        SecurityContextHolder.clearContext();
-        // Kiểm tra token (nếu có)
+    public ResponseEntity<String> logout(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            // Có thể lưu danh sách token đã logout để không cho phép sử dụng lại
             String token = authHeader.substring(7);
-            jwtUtil.blacklistToken(token);
+            jwtBlacklistService.blacklistToken(token);
         }
-        // Xóa session
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-
-        // Xóa cookie (nếu có)
-        Cookie cookie = new Cookie("JSESSIONID", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
-
-        return ResponseEntity.ok("Đăng xuất thành công!");
+        return ResponseEntity.ok("Đăng xuất thành công");
     }
 }

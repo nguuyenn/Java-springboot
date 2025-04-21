@@ -13,7 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import uth.edu.webpsy.jwt.JwtUtil;
-import uth.edu.webpsy.models.User;
+import uth.edu.webpsy.services.JwtBlacklistService;
 import uth.edu.webpsy.services.UserService;
 
 @Configuration
@@ -29,8 +29,8 @@ public class SecurityConfig {
 
     //kiểm tra JWT token trong mỗi request để xác thực người dùng
     @Bean
-    public JwtFilter jwtFilter(UserService userService, JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        return new JwtFilter(jwtUtil, userDetailsService, userService);
+    public JwtFilter jwtFilter(UserService userService, JwtUtil jwtUtil, UserDetailsService userDetailsService, JwtBlacklistService jwtBlacklistService) {
+        return new JwtFilter(jwtUtil, userDetailsService, userService, jwtBlacklistService);
     }
 
     // mã hóa mật khẩu
@@ -55,22 +55,6 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAuthority("ADMIN") // Chỉ admin mới vào được
                         .requestMatchers("/dashboard/**").hasAnyAuthority("STUDENT", "PARENT", "PSYCHOLOGIST")
                         .anyRequest().authenticated() // yêu cầu đăng nhập
-                )
-                .formLogin(login -> login
-                        .loginPage("/auth/web-login")
-                        .defaultSuccessUrl("/dashboard", true) // Mặc định về /dashboard nếu không phải admin
-                        .successHandler((request, response, authentication) -> {
-                            User user = (User) authentication.getPrincipal();
-                            if (user.getRole().equals("ADMIN")) {
-                                response.sendRedirect("/admin/dashboard");
-                            }
-                            else {
-                                response.sendRedirect("/dashboard");
-                            }
-                        }
-                        )
-                        .failureUrl("/auth/web-login?error=true") // Nếu đăng nhập thất bại
-                        .permitAll()
                 )
                 .sessionManagement(session -> session // Bật session cho web
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
